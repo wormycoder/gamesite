@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com wss://*.firebaseio.com;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Game Site</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #1a1a1a; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; padding: 1.5rem 1rem; gap: 4px; flex-shrink: 0; }
+    .sidebar .logo { font-size: 20px; font-weight: 700; color: #6c47ff; margin-bottom: 1.5rem; padding-left: 8px; }
+    .nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #aaa; transition: all 0.2s; text-decoration: none; }
+    .nav-btn:hover { background: #252525; color: #fff; }
+    .nav-btn.active { background: #6c47ff22; color: #6c47ff; font-weight: 500; }
+    .nav-btn .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-pill { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #111; }
+    .avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: #6c47ff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .user-pill .name { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn { font-size: 12px; color: #555; cursor: pointer; }
+    .logout-btn:hover { color: #ff6b6b; }
+    .main { flex: 1; padding: 2rem; overflow-y: auto; }
+    .profile-header { display: flex; align-items: center; gap: 1.5rem; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.2rem; }
+    .big-avatar { width: 72px; height: 72px; border-radius: 50%; background: #6c47ff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; flex-shrink: 0; }
+    .profile-info h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .profile-info .email { font-size: 13px; color: #555; margin-bottom: 8px; }
+    .profile-info .bio { font-size: 14px; color: #aaa; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 1.2rem; }
+    .stat-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-card .sval { font-size: 24px; font-weight: 700; color: #6c47ff; }
+    .stat-card .slabel { font-size: 12px; color: #555; margin-top: 4px; }
+    .section { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem; }
+    .section-head { font-size: 15px; font-weight: 600; margin-bottom: 1rem; color: #ccc; }
+    .edit-field { margin-bottom: 1rem; }
+    .edit-field label { display: block; font-size: 13px; color: #888; margin-bottom: 6px; }
+    .edit-field input, .edit-field textarea { width: 100%; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 9px 14px; font-size: 14px; color: #fff; font-family: 'Inter', sans-serif; outline: none; resize: vertical; }
+    .edit-field input:focus, .edit-field textarea:focus { border-color: #6c47ff; }
+    .save-btn { background: #6c47ff; color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; }
+    .save-msg { font-size: 13px; color: #4caf50; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo">GameSite</div>
+  <a href="index.html" class="nav-btn"><span class="icon">🎮</span> Games</a>
+  <a href="dashboard.html" class="nav-btn"><span class="icon">📬</span> Dashboard</a>
+  <a href="profile.html" class="nav-btn active"><span class="icon">👤</span> Profile</a>
+  <a href="costume.html" class="nav-btn"><span class="icon">🎨</span> Costume</a>
+  <a href="settings.html" class="nav-btn"><span class="icon">⚙️</span> Settings</a>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="avatar-sm" id="sidebar-avatar">?</div>
+      <span class="name" id="sidebar-name">Loading...</span>
+      <span class="logout-btn" onclick="handleLogout()">Out</span>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="profile-header">
+    <div class="big-avatar" id="big-avatar">?</div>
+    <div class="profile-info">
+      <h1 id="profile-username">Loading...</h1>
+      <p class="email" id="profile-email"></p>
+      <p class="bio" id="profile-bio">No bio yet.</p>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="sval" id="stat-games">0</div><div class="slabel">Games played</div></div>
+    <div class="stat-card"><div class="sval" id="stat-friends">0</div><div class="slabel">Friends</div></div>
+    <div class="stat-card"><div class="sval" id="stat-joined">—</div><div class="slabel">Joined</div></div>
+  </div>
+  <div class="section">
+    <p class="section-head">Edit profile</p>
+    <div class="edit-field"><label>Bio</label><textarea id="edit-bio" rows="3" placeholder="Tell people about yourself..."></textarea></div>
+    <button class="save-btn" onclick="saveProfile()">Save changes</button>
+    <p class="save-msg" id="save-msg">Saved!</p>
+  </div>
+</div>
+
+<script type="module">
+  import { watchAuth, logout } from "./js/auth.js";
+  import { setOnline } from "./js/presence.js";
+  import { db } from "./js/firebase.js";
+  import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let currentUser = null;
+
+  watchAuth(async (user) => {
+    currentUser = user;
+    const initial = (user.displayName || "?")[0].toUpperCase();
+    document.getElementById("sidebar-avatar").textContent = initial;
+    document.getElementById("big-avatar").textContent = initial;
+    document.getElementById("sidebar-name").textContent = user.displayName || user.email;
+    document.getElementById("profile-username").textContent = user.displayName || "Unknown";
+    document.getElementById("profile-email").textContent = user.email;
+    await setOnline(user.uid);
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      document.getElementById("profile-bio").textContent = data.bio || "No bio yet.";
+      document.getElementById("edit-bio").value = data.bio || "";
+      document.getElementById("stat-games").textContent = data.gamesPlayed || 0;
+      if (data.createdAt) {
+        const d = data.createdAt.toDate();
+        document.getElementById("stat-joined").textContent = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      }
+    }
+    const friendsSnap = await getDocs(collection(db, "users", user.uid, "friends"));
+    document.getElementById("stat-friends").textContent = friendsSnap.size;
+  }, () => { window.location.href = "login.html"; });
+
+  window.saveProfile = async function() {
+    const bio = document.getElementById("edit-bio").value.trim();
+    await updateDoc(doc(db, "users", currentUser.uid), { bio });
+    document.getElementById("profile-bio").textContent = bio || "No bio yet.";
+    const msg = document.getElementById("save-msg");
+    msg.style.display = "block";
+    setTimeout(() => { msg.style.display = "none"; }, 2000);
+  };
+
+  window.handleLogout = logout;
+</script>
+</body>
+</html>

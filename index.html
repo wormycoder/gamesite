@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com wss://*.firebaseio.com;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Site</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar { width: 220px; background: #1a1a1a; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; padding: 1.5rem 1rem; gap: 4px; flex-shrink: 0; }
+    .sidebar .logo { font-size: 20px; font-weight: 700; color: #6c47ff; margin-bottom: 1.5rem; padding-left: 8px; }
+    .nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #aaa; transition: all 0.2s; text-decoration: none; }
+    .nav-btn:hover { background: #252525; color: #fff; }
+    .nav-btn.active { background: #6c47ff22; color: #6c47ff; font-weight: 500; }
+    .nav-btn .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-pill { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #111; }
+    .avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: #6c47ff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .user-pill .name { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn { font-size: 12px; color: #555; cursor: pointer; }
+    .logout-btn:hover { color: #ff6b6b; }
+
+    /* Main content */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Friends bar */
+    .friends-bar { background: #151515; border-bottom: 1px solid #2a2a2a; padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; overflow-x: auto; }
+    .friends-bar-title { font-size: 12px; color: #555; font-weight: 500; white-space: nowrap; margin-right: 4px; }
+    .friend-bubble { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex-shrink: 0; }
+    .friend-bubble .av { width: 38px; height: 38px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; position: relative; }
+    .friend-bubble .av .dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #151515; }
+    .dot.online { background: #4caf50; }
+    .dot.offline { background: #555; }
+    .friend-bubble .fname { font-size: 11px; color: #777; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .no-friends { font-size: 13px; color: #444; }
+
+    /* Invite popup */
+    .invite-popup { position: fixed; top: 16px; right: 16px; background: #1e1e2e; border: 1px solid #6c47ff; border-radius: 12px; padding: 1rem 1.2rem; width: 280px; z-index: 999; display: none; }
+    .invite-popup.show { display: block; }
+    .invite-popup .inv-title { font-size: 13px; color: #aaa; margin-bottom: 4px; }
+    .invite-popup .inv-name { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .invite-popup .inv-game { font-size: 13px; color: #6c47ff; margin-bottom: 12px; }
+    .invite-btns { display: flex; gap: 8px; }
+    .inv-yes { flex: 1; background: #6c47ff; border: none; color: #fff; border-radius: 8px; padding: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; }
+    .inv-no { flex: 1; background: #2a2a2a; border: none; color: #aaa; border-radius: 8px; padding: 8px; font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+    /* Content area */
+    .content { flex: 1; padding: 1.5rem; overflow-y: auto; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 1rem; }
+    .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    .game-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+    .game-card:hover { transform: translateY(-3px); border-color: #6c47ff; }
+    .game-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #252525; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+    .game-info { padding: 0.75rem; }
+    .game-info .gtitle { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .game-info .gplayers { font-size: 12px; color: #555; }
+    .online-badge { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4caf50; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- Invite popup -->
+<div class="invite-popup" id="invite-popup">
+  <p class="inv-title">You've been invited by</p>
+  <p class="inv-name" id="inv-from">—</p>
+  <p class="inv-game" id="inv-game">—</p>
+  <div class="invite-btns">
+    <button class="inv-yes" onclick="acceptInvite()">Join</button>
+    <button class="inv-no" onclick="declineInvite()">Decline</button>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">GameSite</div>
+  <a href="index.html" class="nav-btn active"><span class="icon">🎮</span> Games</a>
+  <a href="dashboard.html" class="nav-btn"><span class="icon">📬</span> Dashboard</a>
+  <a href="profile.html" class="nav-btn"><span class="icon">👤</span> Profile</a>
+  <a href="costume.html" class="nav-btn"><span class="icon">🎨</span> Costume</a>
+  <a href="settings.html" class="nav-btn"><span class="icon">⚙️</span> Settings</a>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="avatar-sm" id="sidebar-avatar">?</div>
+      <span class="name" id="sidebar-name">Loading...</span>
+      <span class="logout-btn" onclick="handleLogout()">Out</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="friends-bar" id="friends-bar">
+    <span class="friends-bar-title">Friends</span>
+    <span class="no-friends" id="no-friends-msg">Add friends to see them here</span>
+  </div>
+  <div class="content">
+    <p class="section-title">Games</p>
+    <div class="games-grid" id="games-grid">
+      <div class="game-card">
+        <div class="game-thumb">🏰</div>
+        <div class="game-info"><p class="gtitle">Castle Defense</p><p class="gplayers"><span class="online-badge"></span>12 playing</p></div>
+      </div>
+      <div class="game-card">
+        <div class="game-thumb">🚀</div>
+        <div class="game-info"><p class="gtitle">Space Race</p><p class="gplayers"><span class="online-badge"></span>8 playing</p></div>
+      </div>
+      <div class="game-card">
+        <div class="game-thumb">⚔️</div>
+        <div class="game-info"><p class="gtitle">Arena Battle</p><p class="gplayers"><span class="online-badge"></span>24 playing</p></div>
+      </div>
+      <div class="game-card">
+        <div class="game-thumb">🧩</div>
+        <div class="game-info"><p class="gtitle">Puzzle World</p><p class="gplayers"><span class="online-badge"></span>5 playing</p></div>
+      </div>
+      <div class="game-card">
+        <div class="game-thumb">🏎️</div>
+        <div class="game-info"><p class="gtitle">Turbo Kart</p><p class="gplayers"><span class="online-badge"></span>17 playing</p></div>
+      </div>
+      <div class="game-card">
+        <div class="game-thumb">🌊</div>
+        <div class="game-info"><p class="gtitle">Ocean Survival</p><p class="gplayers"><span class="online-badge"></span>3 playing</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { watchAuth, logout } from "./js/auth.js";
+  import { setOnline, watchFriends } from "./js/presence.js";
+  import { watchInvites, declineInviteById } from "./js/invites.js";
+
+  let currentInviteId = null;
+
+  watchAuth(async (user) => {
+    const initial = (user.displayName || "?")[0].toUpperCase();
+    document.getElementById("sidebar-avatar").textContent = initial;
+    document.getElementById("sidebar-name").textContent = user.displayName || user.email;
+    await setOnline(user.uid);
+    watchFriends(user.uid, renderFriends);
+    watchInvites(user.uid, showInvite);
+  }, () => { window.location.href = "login.html"; });
+
+  function renderFriends(friends) {
+    const bar = document.getElementById("friends-bar");
+    const noMsg = document.getElementById("no-friends-msg");
+    const existing = bar.querySelectorAll(".friend-bubble");
+    existing.forEach(e => e.remove());
+    if (friends.length === 0) { noMsg.style.display = "block"; return; }
+    noMsg.style.display = "none";
+    friends.forEach(f => {
+      const bubble = document.createElement("div");
+      bubble.className = "friend-bubble";
+      bubble.innerHTML = `<div class="av">${f.username[0].toUpperCase()}<span class="dot ${f.online ? 'online' : 'offline'}"></span></div><span class="fname">${f.username}</span>`;
+      bar.appendChild(bubble);
+    });
+  }
+
+  function showInvite(invite) {
+    currentInviteId = invite.id;
+    document.getElementById("inv-from").textContent = invite.fromName;
+    document.getElementById("inv-game").textContent = "Invited you to: " + invite.gameName;
+    document.getElementById("invite-popup").classList.add("show");
+  }
+
+  window.acceptInvite = function() {
+    document.getElementById("invite-popup").classList.remove("show");
+    alert("Joining game — connect this to your game engine!");
+  };
+
+  window.declineInvite = async function() {
+    if (currentInviteId) await declineInviteById(currentInviteId);
+    document.getElementById("invite-popup").classList.remove("show");
+  };
+
+  window.handleLogout = logout;
+</script>
+</body>
+</html>
