@@ -80,9 +80,9 @@
 </div>
 
 <script type="module">
-  import { watchAuth, logout } from "./js/auth.js";
-  import { setOnline } from "./js/presence.js";
-  import { db } from "./js/firebase.js";
+  import { watchAuth, logout } from "./auth.js";
+  import { setOnline } from "./presence.js";
+  import { db } from "./firebase.js";
   import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   let currentUser = null;
